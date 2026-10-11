@@ -1,0 +1,99 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tarifs Occasionnels - ParkingPro{% endblock %}
+
+{% block body %}
+<div class="header-bar">
+    <div>
+        <h2 class="page-title">Tarifs Occasionnels</h2>
+        <p class="page-subtitle">Gérez les tarifs spéciaux pour les jours particuliers (événements, jours fériés, etc.)</p>
+    </div>
+</div>
+
+<!-- Formulaire d'ajout -->
+<div class="card" style="margin-bottom:2rem;">
+    <h3 class="panel-title" style="margin-bottom:1.5rem;">Ajouter un Tarif Occasionnel</h3>
+    <form method="POST" action="{{ path('app_pricing_add') }}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;align-items:flex-end;">
+        <div class="form-group" style="margin-bottom:0;">
+            <label for="date" class="form-label">Date</label>
+            <input type="date" id="date" name="date" class="form-input" required>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <label for="price" class="form-label">Prix par Heure (Ar)</label>
+            <input type="number" id="price" name="price" class="form-input" placeholder="3000" min="1" step="100" required>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <label for="reason" class="form-label">Raison (optionnel)</label>
+            <input type="text" id="reason" name="reason" class="form-input" placeholder="ex: Concert, Fête nationale...">
+        </div>
+        <button type="submit" class="btn btn-primary" style="padding:0.7rem 1.5rem;">Ajouter</button>
+    </form>
+</div>
+
+<!-- Table des tarifs -->
+<div class="card table-card">
+    <h3 class="panel-title" style="margin-bottom:1rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;display:inline-block;margin-right:0.5rem;vertical-align:text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.148.42-.245.613a.75.75 0 0 0 .97.97c.1-.194.183-.403.245-.613m0 0a9.97 9.97 0 0 1 2.804-5.513m-4.3 5.513a24.936 24.936 0 0 1 -1.297-1.293c-.395-.395-.545-.893-.345-1.342m0 0a23.964 23.964 0 0 1 3.976-3.868m3.4 7.694l3.775-2.182c.896-.497 1.338-1.48.984-2.364m0 0a23.521 23.521 0 0 0-1.583-2.36c-.5-.969-.983-1.8-.516-2.632m0 0c.218-.424.134-.89-.304-1.454m0 0a23.997 23.997 0 0 0 -2.861-3.144M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /></svg>
+        Tarifs Occasionnels
+    </h3>
+
+    {% if occasionalPrices|length > 0 %}
+    <div class="table-wrapper">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Jour</th>
+                    <th>Tarif Normal (Ar/h)</th>
+                    <th>Tarif Occasionnel (Ar/h)</th>
+                    <th>Raison</th>
+                    <th class="text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for price in occasionalPrices %}
+                <tr>
+                    <td><strong>{{ price.date|date('d/m/Y') }}</strong></td>
+                    <td><span style="font-size:0.9rem;color:var(--text-secondary);">{{ price.date|date('l')|capitalize }}</span></td>
+                    <td>{{ flatRateAr|number_format(0, ',', ' ') }} Ar</td>
+                    <td>
+                        <span style="font-size:1.1rem;font-weight:700;color:var(--warning);">
+                            {{ price.pricePerHour|number_format(0, ',', ' ') }} Ar
+                        </span>
+                        <span style="font-size:0.8rem;color:var(--success);">
+                            (+{{ (price.pricePerHour - flatRateAr)|number_format(0, ',', ' ') }} Ar)
+                        </span>
+                    </td>
+                    <td>
+                        {% if price.reason %}
+                            <span style="background:rgba(59,130,246,0.1);padding:0.3rem 0.8rem;border-radius:4px;font-size:0.85rem;">{{ price.reason }}</span>
+                        {% else %}
+                            <span style="color:var(--text-muted);font-size:0.9rem;">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-right">
+                        <form method="POST" action="{{ path('app_pricing_delete', {id: price.id}) }}" style="display:inline-block;" onsubmit="return confirm('Supprimer le tarif du {{ price.date|date('d/m/Y') }} ?');">
+                            <button type="submit" class="btn btn-danger" style="padding:0.4rem 0.9rem;font-size:0.85rem;">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="text-align:center;color:var(--text-muted);padding:2rem;">Aucun tarif occasionnel configuré. Ajoutez-en un pour commencer.</p>
+    {% endif %}
+</div>
+
+<!-- Info Card -->
+<div class="card" style="margin-top:2rem;background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(139,92,246,0.04));">
+    <h4 style="font-weight:600;margin-bottom:0.75rem;color:var(--accent);">ℹ️ À Savoir</h4>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:0.6rem;font-size:0.9rem;color:var(--text-secondary);">
+        <li>• Les tarifs occasionnels remplacent le tarif de base pour la date définie</li>
+        <li>• Vous pouvez modifier un tarif en en ajoutant un nouveau pour la même date</li>
+        <li>• Les jours sans tarif occasionnel appliquent le tarif standard de <strong>{{ flatRateAr|number_format(0, ',', ' ') }} Ar/h</strong></li>
+        <li>• Idéal pour les événements, jours fériés ou périodes spéciales</li>
+    </ul>
+</div>
+{% endblock %}

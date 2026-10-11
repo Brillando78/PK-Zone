@@ -1,0 +1,86 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un compte - ParkingPro{% endblock %}
+
+{% block auth_body %}
+<div class="auth-container">
+    <div class="auth-logo">
+        <div class="auth-logo-icon">P</div>
+        <span class="auth-logo-name">ParkingPro</span>
+    </div>
+
+    <div class="auth-card">
+        <h2 class="auth-title">Créer un compte</h2>
+        <p class="auth-subtitle">Rejoignez ParkingPro pour gérer vos stationnements facilement.</p>
+
+        {% if error %}
+            <div class="auth-error">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form action="{{ path('app_register') }}" method="POST" class="auth-form">
+
+            <div class="form-group">
+                <label for="regFullName" class="form-label">Nom complet <span style="color:var(--text-muted);">(optionnel)</span></label>
+                <input type="text"
+                        id="regFullName"
+                        name="fullName"
+                        class="form-input"
+                        placeholder="Jean Rakoto"
+                        autocomplete="name"
+                        value="{{ app.request.request.get('fullName', '') }}">
+            </div>
+
+            <div class="form-group">
+                <label for="regEmail" class="form-label">Adresse email <span style="color:var(--danger);">*</span></label>
+                <input type="email"
+                        id="regEmail"
+                        name="email"
+                        class="form-input"
+                        placeholder="votre email"
+                        autocomplete="email"
+                        required
+                        value="{{ app.request.request.get('email', '') }}">
+            </div>
+
+            <div class="form-group">
+                <label for="regPassword" class="form-label">Mot de passe <span style="color:var(--danger);">*</span></label>
+                <input type="password"
+                        id="regPassword"
+                        name="password"
+                        class="form-input"
+                        placeholder="Minimum 6 caractères"
+                        autocomplete="new-password"
+                        required
+                        minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label for="regPassword2" class="form-label">Confirmer le mot de passe <span style="color:var(--danger);">*</span></label>
+                <input type="password"
+                        id="regPassword2"
+                        name="password_confirm"
+                        class="form-input"
+                        placeholder="Répéter le mot de passe"
+                        autocomplete="new-password"
+                        required>
+            </div>
+
+            <div style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;color:var(--text-secondary);">
+                🔒 Votre compte aura le rôle <strong style="color:var(--success);">Client</strong>. Pour un accès administrateur, contactez le gestionnaire du parking.
+            </div>
+
+            <button type="submit" class="btn-auth" id="btn-register">
+                Créer mon compte
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Déjà un compte ?
+            <a href="{{ path('app_login') }}">Se connecter</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

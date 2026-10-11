@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Historique & Revenus - ParkingPro{% endblock %}
+
+{% block body %}
+<div class="header-bar">
+    <div>
+        <h2 class="page-title">Historique & Revenus</h2>
+        <p class="page-subtitle">Archives des sessions de stationnement et récapitulatif financier en Ariary.</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="grid-template-columns:repeat(2,1fr);">
+    <div class="card stat-card success">
+        <span class="stat-label">Sessions Traitées</span>
+        <span class="stat-value">{{ history|length }}</span>
+        <span class="stat-sub">véhicules archivés</span>
+    </div>
+    <div class="card stat-card warning">
+        <span class="stat-label">Chiffre d'Affaires Cumulé</span>
+        <span class="stat-value" style="font-size:1.6rem;">{{ totalRevenue|number_format(0, ',', ' ') }} Ar</span>
+        <span class="stat-sub">total historique</span>
+    </div>
+</div>
+
+<!-- History Table -->
+<div class="card table-card">
+    <h3 class="panel-title">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-16.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-16.25v14.25" /></svg>
+        Stationnements Clôturés
+    </h3>
+
+    <div style="margin-bottom:1.5rem;">
+        <input type="text" id="historySearch" class="form-input" placeholder="🔍 Rechercher par plaque d'immatriculation..." style="max-width:400px;padding:0.6rem 1rem;border-radius:8px;">
+    </div>
+
+    <div class="table-wrapper">
+        <table class="custom-table" id="historyTable">
+            <thead>
+                <tr>
+                    <th>Véhicule</th>
+                    <th>Place</th>
+                    <th>Entrée</th>
+                    <th>Sortie</th>
+                    <th>Durée</th>
+                    <th class="text-right">Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in history %}
+                    {% set durationInSeconds = item.exitTime.timestamp - item.entryTime.timestamp %}
+                    {% set hours = (durationInSeconds / 3600)|round(0, 'floor') %}
+                    {% set minutes = ((durationInSeconds % 3600) / 60)|round(0, 'floor') %}
+                    <tr class="history-row">
+                        <td class="plate-cell"><span class="plate-badge">{{ item.vehiclePlate }}</span></td>
+                        <td><strong>{{ item.spot.spotNumber }}</strong></td>
+                        <td>{{ item.entryTime|date('d/m/Y H:i') }}</td>
+                        <td>{{ item.exitTime|date('d/m/Y H:i') }}</td>
+                        <td><strong>{{ hours }}h {{ minutes }}min</strong></td>
+                        <td class="text-right">
+                            <strong style="color:var(--warning);font-size:0.95rem;">{{ item.amountPaid|number_format(0, ',', ' ') }} Ar</strong>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="color:var(--text-muted);text-align:center;padding:2rem 0;">Aucun historique disponible.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById("historySearch");
+    const rows = document.querySelectorAll(".history-row");
+
+    if (searchInput) {
+        searchInput.addEventListener("input", function() {
+            const query = this.value.toUpperCase().trim();
+            rows.forEach(row => {
+                const plate = row.querySelector(".plate-cell");
+                row.style.display = (!query || (plate && plate.textContent.toUpperCase().includes(query))) ? "" : "none";
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

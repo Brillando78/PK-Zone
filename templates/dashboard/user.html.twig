@@ -1,0 +1,249 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Espace Parking - ParkingPro{% endblock %}
+
+{% block body %}
+<div class="header-bar">
+    <div>
+        <h2 class="page-title">Espace Client</h2>
+        <p class="page-subtitle">Bienvenue, {{ app.user.displayName }} — Consultez l'état du parking et votre ticket en temps réel.</p>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="background-color:var(--success);width:8px;height:8px;border-radius:50%;box-shadow:0 0 8px var(--success);animation:pulseGlowSuccess 2s infinite;"></div>
+        <span style="font-size:0.85rem;color:var(--text-secondary);font-weight:500;">En direct</span>
+    </div>
+</div>
+
+<!-- Stats rapides -->
+<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="card stat-card primary">
+        <span class="stat-label">Capacité Totale</span>
+        <span class="stat-value">{{ totalSpots }}</span>
+        <span class="stat-sub">places au total</span>
+    </div>
+    <div class="card stat-card success">
+        <span class="stat-label">Places Libres</span>
+        <span class="stat-value">{{ availableSpots }}</span>
+        <span class="stat-sub">disponibles maintenant</span>
+    </div>
+    <div class="card stat-card danger">
+        <span class="stat-label">Occupées</span>
+        <span class="stat-value">{{ occupiedSpots }}</span>
+        <span class="stat-sub">véhicules dans le parking</span>
+    </div>
+</div>
+
+<div class="dashboard-layout">
+    <!-- Colonne gauche : plan + sessions actives utilisateur connecté -->
+    <div style="display:flex;flex-direction:column;gap:2rem;">
+
+        <!-- Plan interactif -->
+        <div class="card">
+            <div class="map-header">
+                <h3 class="panel-title" style="margin-bottom:0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8m-9-10.5a3 3 0 1 1 6 0m0 0a3 3 0 1 1 6 0m0 0v7.5m0 0a3 3 0 1 1-6 0m0 0a3 3 0 1 1-6 0m0 0V6.75m12 0v1.5m0 0H18m-12 0h1.5m-1.5 0H3m18 0h-1.5" /></svg>
+                    Plan du Parking
+                </h3>
+                <div class="map-legends">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color:rgba(16,185,129,0.15);border:1px solid var(--success);"></span>
+                        <span>Libre</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color:rgba(239,68,68,0.15);border:1px solid var(--danger);"></span>
+                        <span>Occupé</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="parking-grid">
+                {% for spot in spots %}
+                    <div class="spot-box {{ spot.status }}" 
+                        {% if spot.status == 'available' and not is_granted('ROLE_ADMIN') %}
+                            style="cursor: pointer;"
+                            onclick="openReservationModal({{ spot.id }}, '{{ spot.spotNumber }}')"
+                        {% endif %}>
+                        <div class="spot-box-top">
+                            <span class="spot-number">{{ spot.spotNumber }}</span>
+                            <span class="spot-status-dot"></span>
+                        </div>
+                        <div class="spot-box-mid">
+                            {% if spot.status == 'occupied' %}
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:22px;height:22px;color:var(--danger);opacity:0.7;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124l-.322-9c-.04-.593-.538-1.049-1.133-1.049H14.83a1.875 1.875 0 0 0-1.793 1.32l-1.026 3.42a1.875 1.875 0 0 1-1.793 1.32H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 0h-4.5A1.875 1.875 0 0 1 13.5 12.375V9.75M2.25 14.25h1.5m10.5-4.5H20.25M2.25 9.75h18" /></svg>
+                            {% else %}
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:22px;height:22px;opacity:0.25;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                            {% endif %}
+                        </div>
+                        <div class="spot-box-bottom">
+                            <span style="font-size:0.7rem;color:var(--text-muted);">{{ spot.status == 'available' ? 'Libre' : 'Occupé' }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <p style="grid-column:span 4;color:var(--text-muted);text-align:center;padding:2rem 0;">Aucune place configurée.</p>
+                {% endfor %}
+            </div>
+
+            <!-- Reservation Modal (Hidden for admins) -->
+            {% if not is_granted('ROLE_ADMIN') %}
+            <div id="reservationModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+                <div class="card" style="width:90%;max-width:400px;">
+                    <h3 style="margin-bottom:1rem;font-size:1.1rem;font-weight:700;">Réserver la place <span id="modalSpotNumber" style="color:var(--primary);"></span></h3>
+                    <form method="POST" action="/user/reserve" style="display:flex;flex-direction:column;gap:1rem;">
+                        <input type="hidden" id="spotIdField" name="spot_id" value="">
+                        <div class="form-group">
+                            <label for="modalPlate" class="form-label">Plaque d'immatriculation</label>
+                            <input type="text" id="modalPlate" name="vehiclePlate" class="form-input" placeholder="0000 AA AA" required autocomplete="off" style="text-transform:uppercase;">
+                        </div>
+                        <div style="display:flex;gap:1rem;">
+                            <button type="button" class="btn btn-danger" style="flex:1;" onclick="closeReservationModal()">Annuler</button>
+                            <button type="submit" class="btn btn-success" style="flex:1;">Réserver</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sessions actives du parking (lecture seule + bouton sortie pour le client) -->
+        {% if activeRegistrations|length > 0 %}
+        <div class="card table-card">
+            <h3 class="panel-title">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                Véhicules dans le Parking
+            </h3>
+            <div class="table-wrapper">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Plaque</th>
+                            <th>Place</th>
+                            <th>Entrée</th>
+                            <th>Durée</th>
+                            <th class="text-right">Montant estimé</th>
+                            {% if not is_granted('ROLE_ADMIN') %}<th class="text-right">Action</th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reg in activeRegistrations %}
+                            <tr class="registration-row"
+                                id="ureg-row-{{ reg.id }}"
+                                data-entry-time="{{ reg.entryTime|date('Y-m-d\\TH:i:sP') }}"
+                                data-flat-rate="{{ flatRateAr }}">
+                                <td><span class="plate-badge">{{ reg.vehiclePlate }}</span></td>
+                                <td><strong>{{ reg.spot.spotNumber }}</strong></td>
+                                <td>{{ reg.entryTime|date('H:i') }} <span style="font-size:0.8rem;color:var(--text-muted);">({{ reg.entryTime|date('d/m') }})</span></td>
+                                <td><span class="live-timer" id="utimer-{{ reg.id }}">...</span></td>
+                                <td class="text-right"><span class="cost-amount" id="ucost-{{ reg.id }}">0 Ar</span></td>
+                                {% if not is_granted('ROLE_ADMIN') %}
+                                <td class="text-right">
+                                    <form action="{{ path('app_user_exit', {id: reg.id}) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Confirmer le paiement et la sortie du véhicule {{ reg.vehiclePlate }} ?');">
+                                        <button type="submit" class="btn btn-success" style="padding:0.4rem 0.9rem;font-size:0.85rem;">
+                                            Payer &amp; Sortir
+                                        </button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Colonne droite : info tarifaire -->
+    <div style="display:flex;flex-direction:column;gap:1.5rem;">
+
+        <!-- Info Tarif -->
+        <div class="card tarif-info-box">
+            <h4 style="font-weight:700;margin-bottom:1rem;font-size:1rem;display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-size:1.2rem;">💰</span> Tarification
+            </h4>
+            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;background:rgba(255,255,255,0.04);border-radius:8px;">
+                    <div>
+                        <div style="font-weight:600;font-size:0.95rem;">Tarif Unique</div>
+                        <div style="font-size:0.8rem;color:var(--text-muted);">Standard · Électrique · PMR</div>
+                    </div>
+                    <div style="font-size:1.3rem;font-weight:800;color:var(--warning);">{{ flatRateAr|number_format(0, ',', ' ') }} Ar<span style="font-size:0.75rem;font-weight:500;color:var(--text-muted);">/h</span></div>
+                </div>
+            </div>
+            <div style="margin-top:1rem;font-size:0.82rem;color:var(--text-secondary);display:flex;flex-direction:column;gap:0.3rem;">
+                <div>• Facturation par heure entière entamée</div>
+                <div>• Minimum de facturation : 1 heure</div>
+                <div>• Paiement à la sortie</div>
+            </div>
+        </div>
+
+        <!-- Carte informative -->
+        <div class="card" style="background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(139,92,246,0.04));">
+            <h4 style="font-weight:600;margin-bottom:0.75rem;font-size:0.95rem;color:var(--accent);">ℹ️ Comment ça marche ?</h4>
+            <ol style="list-style:none;display:flex;flex-direction:column;gap:0.6rem;font-size:0.85rem;color:var(--text-secondary);">
+                <li style="display:flex;gap:0.6rem;align-items:flex-start;">
+                    <span style="background:var(--primary);color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;">1</span>
+                    <span>Le responsable enregistre votre entrée au guichet avec votre plaque d'immatriculation.</span>
+                </li>
+                <li style="display:flex;gap:0.6rem;align-items:flex-start;">
+                    <span style="background:var(--electric);color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;">2</span>
+                    <span>Votre ticket apparaît ici en temps réel avec la durée et le montant dû.</span>
+                </li>
+                <li style="display:flex;gap:0.6rem;align-items:flex-start;">
+                    <span style="background:var(--success);color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;">3</span>
+                    <span>Cliquez sur <strong>Payer &amp; Sortir</strong> pour valider le paiement et libérer votre place.</span>
+                </li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentSpotId = null;
+
+function openReservationModal(spotId, spotNumber) {
+    currentSpotId = spotId;
+    document.getElementById('modalSpotNumber').textContent = spotNumber;
+    document.getElementById('modalPlate').value = '';
+    document.getElementById('spotIdField').value = spotId;
+    document.getElementById('reservationModal').style.display = 'flex';
+}
+
+function closeReservationModal() {
+    document.getElementById('reservationModal').style.display = 'none';
+    currentSpotId = null;
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const rows = document.querySelectorAll(".registration-row");
+
+    function formatAr(amount) {
+        return amount.toLocaleString('fr-MG') + ' Ar';
+    }
+
+    function updateCounters() {
+        const now = new Date();
+        rows.forEach(row => {
+            const id          = row.id.replace("ureg-row-", "");
+            const entryTime   = new Date(row.getAttribute("data-entry-time"));
+            const flatRate    = parseFloat(row.getAttribute("data-flat-rate"));
+            const diffSecs    = Math.max(0, Math.floor((now - entryTime) / 1000));
+
+            const h = Math.floor(diffSecs / 3600);
+            const m = Math.floor((diffSecs % 3600) / 60);
+            const s = diffSecs % 60;
+
+            const timer = document.getElementById("utimer-" + id);
+            const cost  = document.getElementById("ucost-" + id);
+
+            if (timer) timer.textContent = `${h}h ${m}m ${s}s`;
+            if (cost)  cost.textContent  = formatAr(Math.max(1, Math.ceil(diffSecs / 3600)) * flatRate);
+        });
+    }
+
+    if (rows.length > 0) {
+        updateCounters();
+        setInterval(updateCounters, 1000);
+    }
+});
+</script>
+{% endblock %}

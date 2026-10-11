@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Places - ParkingPro{% endblock %}
+
+{% block body %}
+<div class="header-bar">
+    <div>
+        <h2 class="page-title">Gestion des Places</h2>
+        <p class="page-subtitle">Ajouter ou supprimer des places de stationnement — Tarif unique : {{ flatRateAr|number_format(0, ',', ' ') }} Ar/h</p>
+    </div>
+</div>
+
+<div class="spots-crud-layout">
+
+    <!-- Left: Add Spot Form -->
+    <div class="card">
+        <h3 class="panel-title">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;color:var(--primary);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            Ajouter une Nouvelle Place
+        </h3>
+
+        <form action="{{ path('app_spot_add') }}" method="POST">
+            <div class="form-group">
+                <label for="spotNumber" class="form-label">Numéro de Place</label>
+                <input type="text" id="spotNumber" name="spotNumber" class="form-input" placeholder="A-11 ou E-05" required autocomplete="off" style="text-transform:uppercase;">
+            </div>
+
+            <div class="form-group">
+                <label for="type" class="form-label">Type de Place</label>
+                <input type="hidden" name="type" value="standard">
+                <div style="padding:0.75rem;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:8px;color:var(--text-secondary);">
+                    <strong style="color:var(--primary);">Standard</strong> - Place de parking normale
+                </div>
+            </div>
+
+            <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1.25rem;font-size:0.85rem;color:var(--text-secondary);display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-size:1rem;">💰</span>
+                Tarif appliqué automatiquement : <strong style="color:var(--warning);">{{ flatRateAr|number_format(0, ',', ' ') }} Ar / heure</strong>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+                Ajouter la Place
+            </button>
+        </form>
+    </div>
+
+    <!-- Right: Spots List Table -->
+    <div class="card">
+        <h3 class="panel-title">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+            Places Configurées ({{ spots|length }})
+        </h3>
+
+        <div class="table-wrapper">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Numéro</th>
+                        <th>Type</th>
+                        <th>Tarif</th>
+                        <th>Statut</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for spot in spots %}
+                        <tr>
+                            <td><strong>{{ spot.spotNumber }}</strong></td>
+                            <td><span class="spot-badge {{ spot.type }}">{{ spot.type }}</span></td>
+                            <td><strong style="color:var(--warning);">{{ spot.pricePerHour|number_format(0, ',', ' ') }} Ar/h</strong></td>
+                            <td>
+                                {% if spot.status == 'available' %}
+                                    <span class="text-success" style="font-weight:600;display:inline-flex;align-items:center;gap:0.25rem;">
+                                        <span style="width:6px;height:6px;background-color:var(--success);border-radius:50%;"></span>
+                                        Libre
+                                    </span>
+                                {% else %}
+                                    <span class="text-danger" style="font-weight:600;display:inline-flex;align-items:center;gap:0.25rem;">
+                                        <span style="width:6px;height:6px;background-color:var(--danger);border-radius:50%;"></span>
+                                        Occupé
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-right">
+                                {% if spot.status == 'available' %}
+                                    <form action="{{ path('app_spot_delete', {id: spot.id}) }}" method="POST" onsubmit="return confirm('Supprimer la place {{ spot.spotNumber }} ?');" style="display:inline-block;">
+                                        <button type="submit" class="btn btn-danger" style="padding:0.35rem 0.75rem;font-size:0.8rem;">Supprimer</button>
+                                    </form>
+                                {% else %}
+                                    <button disabled class="btn" style="padding:0.35rem 0.75rem;font-size:0.8rem;background:rgba(255,255,255,0.03);color:var(--text-muted);cursor:not-allowed;">Supprimer</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="color:var(--text-muted);text-align:center;padding:2rem 0;">Aucune place configurée. Ajoutez votre première place.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

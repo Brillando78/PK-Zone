@@ -1,0 +1,201 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de Bord Admin - ParkingPro{% endblock %}
+
+{% block body %}
+<div class="header-bar">
+    <div>
+        <h2 class="page-title">Tableau de Bord Admin</h2>
+        <p class="page-subtitle">Contrôle des flux, enregistrement des entrées/sorties et statistiques en temps réel.</p>
+    </div>
+    <div class="legend-item">
+        <div class="legend-color" style="background-color:var(--success);width:8px;height:8px;border-radius:50%;box-shadow:0 0 8px var(--success);animation:pulseGlowSuccess 2s infinite;"></div>
+        <span style="font-size:0.85rem;color:var(--text-secondary);font-weight:500;">En direct</span>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="card stat-card primary">
+        <span class="stat-label">Capacité Totale</span>
+        <span class="stat-value">{{ totalSpots }}</span>
+        <span class="stat-sub">places configurées</span>
+    </div>
+    <div class="card stat-card success">
+        <span class="stat-label">Places Libres</span>
+        <span class="stat-value">{{ availableSpots }}</span>
+        <span class="stat-sub">disponibles</span>
+    </div>
+    <div class="card stat-card danger">
+        <span class="stat-label">Occupées</span>
+        <span class="stat-value">{{ occupiedSpots }}</span>
+        <span class="stat-sub">Taux : {{ occupancyRate }}%</span>
+    </div>
+    <div class="card stat-card warning">
+        <span class="stat-label">Revenus du Jour</span>
+        <span class="stat-value" style="font-size:1.5rem;">{{ todayRevenue|number_format(0, ',', ' ') }} Ar</span>
+        <span class="stat-sub">aujourd'hui</span>
+    </div>
+</div>
+
+<!-- Main Layout -->
+<div class="dashboard-layout">
+
+    <!-- Left: Parking Map + Active Registrations -->
+    <div style="display:flex;flex-direction:column;gap:2rem;">
+
+        <!-- Interactive Parking Map -->
+        <div class="card">
+            <div class="map-header">
+                <h3 class="panel-title" style="margin-bottom:0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8m-9-10.5a3 3 0 1 1 6 0m0 0a3 3 0 1 1 6 0m0 0v7.5m0 0a3 3 0 1 1-6 0m0 0a3 3 0 1 1-6 0m0 0V6.75m12 0v1.5m0 0H18m-12 0h1.5m-1.5 0H3m18 0h-1.5" /></svg>
+                    Plan Interactif du Parking
+                </h3>
+                <div class="map-legends">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color:rgba(16,185,129,0.15);border:1px solid var(--success);"></span>
+                        <span>Libre</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color:rgba(239,68,68,0.15);border:1px solid var(--danger);"></span>
+                        <span>Occupé</span>
+                    </div>
+                </div>
+            </div>
+            <div class="parking-grid">
+                {% for spot in spots %}
+                    <div class="spot-box {{ spot.status }}" title="Tarif : {{ spot.pricePerHour|number_format(0, ',', ' ') }} Ar/h">
+                        <div class="spot-box-top">
+                            <span class="spot-number">{{ spot.spotNumber }}</span>
+                            <span class="spot-status-dot"></span>
+                        </div>
+                        <div class="spot-box-mid">
+                            {% if spot.status == 'occupied' %}
+                                {% set activeReg = null %}
+                                {% for reg in activeRegistrations %}
+                                    {% if reg.spot.id == spot.id %}{% set activeReg = reg %}{% endif %}
+                                {% endfor %}
+                                <span style="font-size:0.8rem;font-family:monospace;font-weight:700;">{{ activeReg ? activeReg.vehiclePlate : 'OCCUPÉ' }}</span>
+                            {% else %}
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:20px;height:20px;opacity:0.3;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                            {% endif %}
+                        </div>
+                        <div class="spot-box-bottom">
+                            <span style="font-size:0.65rem;">{{ flatRateAr|number_format(0, ',', ' ') }} Ar</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <p style="grid-column:span 4;color:var(--text-muted);text-align:center;padding:2rem 0;">Aucune place configurée. <a href="{{ path('app_spots_management') }}" style="color:var(--primary);">Ajouter des places →</a></p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Active Registrations Table -->
+        <div class="card table-card">
+            <h3 class="panel-title">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                Véhicules Garés ({{ activeRegistrations|length }} actifs)
+            </h3>
+            <div class="table-wrapper">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Véhicule</th>
+                            <th>Place</th>
+                            <th>Entrée</th>
+                            <th>Durée</th>
+                            <th class="text-right">Montant en direct</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reg in activeRegistrations %}
+                            <tr id="reg-row-{{ reg.id }}" class="registration-row"
+                                data-entry-time="{{ reg.entryTime|date('Y-m-d\\TH:i:sP') }}"
+                                data-flat-rate="{{ flatRateAr }}">
+                                <td><span class="plate-badge">{{ reg.vehiclePlate }}</span></td>
+                                <td><strong>{{ reg.spot.spotNumber }}</strong></td>
+                                <td>{{ reg.entryTime|date('H:i') }} <span style="font-size:0.8rem;color:var(--text-muted);">({{ reg.entryTime|date('d/m') }})</span></td>
+                                <td><span class="live-timer" id="timer-{{ reg.id }}">...</span></td>
+                                <td class="text-right"><span class="cost-amount" id="cost-{{ reg.id }}">0 Ar</span></td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" style="color:var(--text-muted);text-align:center;padding:2rem 0;">Aucun véhicule actuellement dans le parking.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Info Panel -->
+    <div class="action-panel">
+
+        <!-- Tarif Info -->
+        <div class="card" style="background:linear-gradient(135deg,rgba(16,185,129,0.05),rgba(6,182,212,0.04));border-color:rgba(16,185,129,0.15);">
+            <h4 style="font-weight:600;margin-bottom:0.75rem;color:#a3e635;">💰 Tarification</h4>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:0.5rem;font-size:0.85rem;color:var(--text-secondary);">
+                <li>• <strong style="color:var(--warning);">Tarif unique : {{ flatRateAr|number_format(0, ',', ' ') }} Ar / heure</strong></li>
+                <li>• Toute heure entamée est due entièrement</li>
+                <li>• Facturation minimale : 1 heure</li>
+                <li>• Les clients réservent leur place directement</li>
+            </ul>
+        </div>
+
+        <!-- Info Card -->
+        <div class="card" style="background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(139,92,246,0.04));">
+            <h4 style="font-weight:600;margin-bottom:0.75rem;font-size:0.95rem;color:var(--accent);">ℹ️ Flux de Réservation</h4>
+            <ol style="list-style:none;display:flex;flex-direction:column;gap:0.6rem;font-size:0.85rem;color:var(--text-secondary);">
+                <li style="display:flex;gap:0.6rem;align-items:flex-start;">
+                    <span style="background:var(--primary);color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;">1</span>
+                    <span>Le client accède au plan du parking</span>
+                </li>
+                <li style="display:flex;gap:0.6rem;align-items:flex-start;">
+                    <span style="background:var(--warning);color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;">2</span>
+                    <span>Il clique sur une place libre</span>
+                </li>
+                <li style="display:flex;gap:0.6rem;align-items:flex-start;">
+                    <span style="background:var(--success);color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;">3</span>
+                    <span>Il entre sa plaque d'immatriculation</span>
+                </li>
+                <li style="display:flex;gap:0.6rem;align-items:flex-start;">
+                    <span style="background:var(--accent);color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;">4</span>
+                    <span>La place s'affiche comme occupée et le chrono démarre</span>
+                </li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const rows = document.querySelectorAll(".registration-row");
+
+    function updateLiveCounters() {
+        const now = new Date();
+        rows.forEach(row => {
+            const id        = row.id.replace("reg-row-", "");
+            const entry     = new Date(row.getAttribute("data-entry-time"));
+            const flatRate  = parseFloat(row.getAttribute("data-flat-rate"));
+            const diffSecs  = Math.max(0, Math.floor((now - entry) / 1000));
+
+            const h = Math.floor(diffSecs / 3600);
+            const m = Math.floor((diffSecs % 3600) / 60);
+            const s = diffSecs % 60;
+
+            const timer = document.getElementById("timer-" + id);
+            const cost  = document.getElementById("cost-" + id);
+
+            if (timer) timer.textContent = `${h}h ${m}m ${s}s`;
+            if (cost)  cost.textContent  = (Math.max(1, Math.ceil(diffSecs / 3600)) * flatRate).toLocaleString('fr-MG') + ' Ar';
+        });
+    }
+
+    if (rows.length > 0) {
+        updateLiveCounters();
+        setInterval(updateLiveCounters, 1000);
+    }
+});
+</script>
+{% endblock %}
