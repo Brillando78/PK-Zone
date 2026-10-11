@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Doctrine\DBAL\LockMode;
 
 class DashboardController extends AbstractController
 {
@@ -53,61 +54,70 @@ class DashboardController extends AbstractController
 
     #[Route('/user/reserve', name: 'app_user_reserve', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
-    public function userReserve(
-        Request $request,
-        ParkingSpotRepository $spotRepository,
-        OccasionalPriceRepository $priceRepository,
-        EntityManagerInterface $entityManager
-    ): Response {
-        if (!$this ->isCsrfTokenValid('reserve', $request -> request -> get('_token'))){
-            throw $this -> createAccessDeniedException('Jeton CSRF invalide.');
-        }
+    
+public function userReserve(
+    Request $request,
+    EntityManagerInterface $entityManager
+): Response {
+    if (!$this->isCsrfTokenValid('reserve', $request->request->get('_token'))) {
+        throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+    }
 
-        if ($this->isGranted('ROLE_ADMIN')) {
-            $this->addFlash('error', 'Les administrateurs ne peuvent pas réserver de place.');
-            return $this->redirectToRoute('app_user_dashboard');
-        }
-
-        $spotId = (int) $request->request->get('spot_id', 0);
-        $spot = $spotRepository->find($spotId);
-        
-        if (!$spot || $spot->getStatus() !== 'available') {
-            $this->addFlash('error', 'Cette place n\'est pas disponible.');
-            return $this->redirectToRoute('app_user_dashboard');
-        }
-
-        $vehiclePlate = strtoupper(trim($request->request->get('vehiclePlate', '')));
-        
-        if (empty($vehiclePlate) || strlen($vehiclePlate) < 4) {
-            $this->addFlash('error', 'Plaque d\'immatriculation invalide.');
-            return $this->redirectToRoute('app_user_dashboard');
-        }
-
-        // Check if vehicle already parked
-        $existing = $entityManager->getRepository(ParkingRegistration::class)->findOneBy([
-            'vehiclePlate' => $vehiclePlate,
-            'status'       => 'active',
-        ]);
-        if ($existing) {
-            $this->addFlash('error', sprintf('Le véhicule %s est déjà garé.', $vehiclePlate));
-            return $this->redirectToRoute('app_user_dashboard');
-        }
-
-        $registration = new ParkingRegistration();
-        $registration->setVehiclePlate($vehiclePlate);
-        $registration->setSpot($spot);
-        $registration->setEntryTime(new \DateTime());
-        $registration->setStatus('active');
-        $registration->setUser($this->getUser());
-
-        $spot->setStatus('occupied');
-
-        $entityManager->persist($registration);
-        $entityManager->flush();
-
-        $this->addFlash('success', sprintf('Place %s réservée pour %s !', $spot->getSpotNumber(), $vehiclePlate));
+    if ($this->isGranted('ROLE_ADMIN')) {
+        $this->addFlash('error', 'Les administrateurs ne peuvent pas réserver de place.');
         return $this->redirectToRoute('app_user_dashboard');
     }
+
+    $spotId       = (int) $request->request->get('spot_id', 0);
+    $vehiclePlate = strtoupper(trim($request->request->get('vehiclePlate', '')));
+
+    if (empty($vehiclePlate) || strlen($vehiclePlate) < 4) {
+        $this->addFlash('error', 'Plaque d\'immatriculation invalide.');
+        return $this->redirectToRoute('app_user_dashboard');
+    }
+
+    $user = $this->getUser();
+
+    // Tout ce qui suit est une seule opération atomique, avec la place verrouillée
+    $error = $entityManager->wrapInTransaction(
+        function () use ($entityManager, $spotId, $vehiclePlate, $user): ?string {
+            $spot = $entityManager->find(ParkingSpot::class, $spotId, LockMode::PESSIMISTIC_WRITE);
+
+            if (!$spot || $spot->getStatus() !== 'available') {
+                return 'Cette place n\'est pas disponible.';
+            }
+
+            $existing = $entityManager->getRepository(ParkingRegistration::class)->findOneBy([
+                'vehiclePlate' => $vehiclePlate,
+                'status'       => 'active',
+            ]);
+            if ($existing) {
+                return sprintf('Le véhicule %s est déjà garé.', $vehiclePlate);
+            }
+
+            $registration = new ParkingRegistration();
+            $registration->setVehiclePlate($vehiclePlate);
+            $registration->setSpot($spot);
+            $registration->setEntryTime(new \DateTime());
+            $registration->setStatus('active');
+            $registration->setUser($user);
+
+            $spot->setStatus('occupied');
+            $entityManager->persist($registration);
+
+            return null; // pas d'erreur
+        }
+    );
+
+    if ($error !== null) {
+        $this->addFlash('error', $error);
+        return $this->redirectToRoute('app_user_dashboard');
+    }
+
+    $spot = $entityManager->find(ParkingSpot::class, $spotId);
+    $this->addFlash('success', sprintf('Place %s réservée pour %s !', $spot->getSpotNumber(), $vehiclePlate));
+    return $this->redirectToRoute('app_user_dashboard');
+}
 
     #[Route('/user/exit/{id}', name: 'app_user_exit', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
