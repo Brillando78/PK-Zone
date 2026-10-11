@@ -94,6 +94,7 @@ class DashboardController extends AbstractController
         $registration->setSpot($spot);
         $registration->setEntryTime(new \DateTime());
         $registration->setStatus('active');
+        $registration->setUser($this->getUser());
 
         $spot->setStatus('occupied');
 
@@ -384,6 +385,8 @@ class DashboardController extends AbstractController
 
         return $this->redirectToRoute('app_occasional_pricing');
     }
+
+    
 
     #[Route('/admin/pricing/delete/{id}', name: 'app_pricing_delete', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]

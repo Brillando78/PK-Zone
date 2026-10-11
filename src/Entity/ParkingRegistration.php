@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ParkingRegistrationRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\JoinColumn;
 
 #[ORM\Entity(repositoryClass: ParkingRegistrationRepository::class)]
 class ParkingRegistration
@@ -32,6 +33,9 @@ class ParkingRegistration
 
     #[ORM\Column(length: 50)]
     private ?string $status = null; // 'active', 'completed'
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true)]
+    private ? user $user = null ;
 
     public function getId(): ?int
     {
@@ -101,6 +105,17 @@ class ParkingRegistration
     public function setStatus(string $status): static
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function getUser() : ?User 
+    {
+        return $this ->user ;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this ->user = $user; 
         return $this;
     }
 }
