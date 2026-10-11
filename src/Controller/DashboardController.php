@@ -59,6 +59,10 @@ class DashboardController extends AbstractController
         OccasionalPriceRepository $priceRepository,
         EntityManagerInterface $entityManager
     ): Response {
+        if (!$this ->isCsrfTokenValid('reserve', $request -> request -> get('_token'))){
+            throw $this -> createAccessDeniedException('Jeton CSRF invalide.');
+        }
+
         if ($this->isGranted('ROLE_ADMIN')) {
             $this->addFlash('error', 'Les administrateurs ne peuvent pas réserver de place.');
             return $this->redirectToRoute('app_user_dashboard');
@@ -109,9 +113,14 @@ class DashboardController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function userExit(
         int $id,
+        Request $request,
         OccasionalPriceRepository $priceRepository,
         EntityManagerInterface $entityManager
     ): Response {
+        if (!$this -> isCsrfTokenValid('exit' . $id, $request -> request -> get('_token'))){
+            throw $this -> createAccessDeniedException('Jeton CSRF invalide');
+        }
+
         $registration = $entityManager->getRepository(ParkingRegistration::class)->find($id);
 
         if (!$registration || $registration->getStatus() !== 'active') {

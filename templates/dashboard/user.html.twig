@@ -89,7 +89,9 @@
                 <div class="card" style="width:90%;max-width:400px;">
                     <h3 style="margin-bottom:1rem;font-size:1.1rem;font-weight:700;">Réserver la place <span id="modalSpotNumber" style="color:var(--primary);"></span></h3>
                     <form method="POST" action="/user/reserve" style="display:flex;flex-direction:column;gap:1rem;">
+                        <input type="hidden" name="_token" value="{{ csrf_token('reserve') }}">
                         <input type="hidden" id="spotIdField" name="spot_id" value="">
+                        
                         <div class="form-group">
                             <label for="modalPlate" class="form-label">Plaque d'immatriculation</label>
                             <input type="text" id="modalPlate" name="vehiclePlate" class="form-input" placeholder="0000 AA AA" required autocomplete="off" style="text-transform:uppercase;">
@@ -137,6 +139,7 @@
                                 {% if not is_granted('ROLE_ADMIN') %}
                                 <td class="text-right">
                                     <form action="{{ path('app_user_exit', {id: reg.id}) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Confirmer le paiement et la sortie du véhicule {{ reg.vehiclePlate }} ?');">
+                                        <input type="hidden" name="_token" value="{{csrf_token('exit' ~ reg.id)}}">
                                         <button type="submit" class="btn btn-success" style="padding:0.4rem 0.9rem;font-size:0.85rem;">
                                             Payer &amp; Sortir
                                         </button>

@@ -21,7 +21,7 @@
         {% endif %}
 
         <form action="{{ path('app_register') }}" method="POST" class="auth-form">
-
+            <input type="hidden" name="_token" value="{{csrf_token('register')}}">
             <div class="form-group">
                 <label for="regFullName" class="form-label">Nom complet <span style="color:var(--text-muted);">(optionnel)</span></label>
                 <input type="text"

@@ -30,7 +30,10 @@ class RegistrationController extends AbstractController
             $fullName  = trim($request->request->get('fullName', ''));
             $password  = $request->request->get('password', '');
             $password2 = $request->request->get('password_confirm', '');
-
+        
+        if (!$this -> isCsrfTokenValid('register' , $request -> request -> get('_token'))){
+            throw $this -> createAccessDeniedException('Jeton CSRF invalide');
+        }
             // Validation
             if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $error = 'Veuillez entrer une adresse email valide.';
