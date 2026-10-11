@@ -31,13 +31,15 @@ class InitParkingCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
+        if ($this ->entityManager ->getRepository(ParkingSpot::class)-> count ([]) > 0 ){
+            $io -> error ('Des places existent déjà : commande refusée pour ne pas effacer les données.');
+            return Command::FAILURE;
+            }
+
+
         $io->title('Initialisation des Places de Parking (Tarif : 2 000 Ar/h)');
 
-        // Clean database (registrations first, then spots)
-        $io->section('Nettoyage des données existantes...');
-        $this->entityManager->createQuery('DELETE FROM App\Entity\ParkingRegistration')->execute();
-        $this->entityManager->createQuery('DELETE FROM App\Entity\ParkingSpot')->execute();
-
+        
         $spots = [
             // Standard spots
             ['number' => 'A-01', 'type' => 'standard'],
