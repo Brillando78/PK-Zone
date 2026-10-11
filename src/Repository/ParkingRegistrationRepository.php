@@ -3,12 +3,10 @@
 namespace App\Repository;
 
 use App\Entity\ParkingRegistration;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<ParkingRegistration>
- */
 class ParkingRegistrationRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -16,13 +14,21 @@ class ParkingRegistrationRepository extends ServiceEntityRepository
         parent::__construct($registry, ParkingRegistration::class);
     }
 
-    /**
-     * @return ParkingRegistration[] Returns an array of active registrations
-     */
     public function findActiveRegistrations(): array
     {
         return $this->createQueryBuilder('r')
             ->andWhere("r.status = 'active'")
+            ->orderBy('r.entryTime', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findActiveByUser(User $user): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere("r.status = 'active'")
+            ->andWhere('r.user = :user')
+            ->setParameter('user', $user)
             ->orderBy('r.entryTime', 'DESC')
             ->getQuery()
             ->getResult();

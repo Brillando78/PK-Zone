@@ -33,7 +33,7 @@ class DashboardController extends AbstractController
         OccasionalPriceRepository $priceRepository
     ): Response {
         $spots              = $spotRepository->findAll();
-        $activeRegistrations = $registrationRepository->findActiveRegistrations();
+        $activeRegistrations = $registrationRepository->findActiveByUser($this->getUser());
         $totalSpots         = count($spots);
         $occupiedSpots      = count(array_filter($spots, fn($s) => $s->getStatus() === 'occupied'));
         $availableSpots     = $totalSpots - $occupiedSpots;
@@ -117,6 +117,10 @@ class DashboardController extends AbstractController
         if (!$registration || $registration->getStatus() !== 'active') {
             $this->addFlash('error', 'Session de stationnement introuvable ou déjà clôturée.');
             return $this->redirectToRoute('app_user_dashboard');
+        }
+        
+        if($registration->getUser()?->getId()!== $this-> getUser()?->getId()){
+            throw $this->createAccessDeniedException();
         }
 
         $exitTime        = new \DateTime();
