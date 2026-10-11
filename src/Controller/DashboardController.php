@@ -121,59 +121,78 @@ public function userReserve(
 
     #[Route('/user/exit/{id}', name: 'app_user_exit', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
-    public function userExit(
-        int $id,
-        Request $request,
-        OccasionalPriceRepository $priceRepository,
-        EntityManagerInterface $entityManager
-    ): Response {
-        if (!$this -> isCsrfTokenValid('exit' . $id, $request -> request -> get('_token'))){
-            throw $this -> createAccessDeniedException('Jeton CSRF invalide');
+public function userExit(
+    int $id,
+    Request $request,
+    OccasionalPriceRepository $priceRepository,
+    EntityManagerInterface $entityManager
+): Response {
+    if (!$this->isCsrfTokenValid('exit' . $id, $request->request->get('_token'))) {
+        throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+    }
+
+    $currentUserId = $this->getUser()?-> getId();
+
+    $result = $entityManager->wrapInTransaction(
+        function () use ($entityManager, $priceRepository, $id, $currentUserId): array {
+            $registration = $entityManager->find(ParkingRegistration::class, $id, LockMode::PESSIMISTIC_WRITE);
+
+            if (!$registration || $registration->getStatus() !== 'active') {
+                return ['error' => 'Session de stationnement introuvable ou déjà clôturée.'];
+            }
+
+            if ($registration->getUser()?->getId() !== $currentUserId) {
+                return ['forbidden' => true];
+            }
+
+            $exitTime          = new \DateTime();
+            $entryTime         = $registration->getEntryTime();
+            $durationInSeconds = max(0, $exitTime->getTimestamp() - $entryTime->getTimestamp());
+
+            $entryDate = clone $entryTime;
+            $entryDate->setTime(0, 0, 0);
+            $todayPrice = $priceRepository->findByDate($entryDate);
+            $flatRateAr = $todayPrice ? (int) $todayPrice->getPricePerHour() : self::FLAT_RATE_AR;
+
+            $hours      = max(1, (int) ceil($durationInSeconds / 3600));
+            $amountPaid = $hours * $flatRateAr;
+
+            $registration->setExitTime($exitTime);
+            $registration->setAmountPaid((string) $amountPaid);
+            $registration->setStatus('completed');
+
+            $spot = $registration->getSpot();
+            $spot->setStatus('available');
+
+            return [
+                'plate'      => $registration->getVehiclePlate(),
+                'seconds'    => $durationInSeconds,
+                'amount'     => $amountPaid,
+                'spotNumber' => $spot->getSpotNumber(),
+            ];
         }
+    );
 
-        $registration = $entityManager->getRepository(ParkingRegistration::class)->find($id);
+    if (isset($result['forbidden'])) {
+        throw $this->createAccessDeniedException();
+    }
 
-        if (!$registration || $registration->getStatus() !== 'active') {
-            $this->addFlash('error', 'Session de stationnement introuvable ou déjà clôturée.');
-            return $this->redirectToRoute('app_user_dashboard');
-        }
-        
-        if($registration->getUser()?->getId()!== $this-> getUser()?->getId()){
-            throw $this->createAccessDeniedException();
-        }
-
-        $exitTime        = new \DateTime();
-        $entryTime       = $registration->getEntryTime();
-        $durationInSeconds = max(0, $exitTime->getTimestamp() - $entryTime->getTimestamp());
-
-        $entryDate = clone $entryTime;
-        $entryDate->setTime(0, 0, 0);
-        $todayPrice = $priceRepository->findByDate($entryDate);
-        $flatRateAr = $todayPrice ? (int) $todayPrice->getPricePerHour() : self::FLAT_RATE_AR;
-
-        $hours      = max(1, (int) ceil($durationInSeconds / 3600));
-        $amountPaid = $hours * $flatRateAr;
-
-        $registration->setExitTime($exitTime);
-        $registration->setAmountPaid((string) $amountPaid);
-        $registration->setStatus('completed');
-
-        $spot = $registration->getSpot();
-        $spot->setStatus('available');
-
-        $entityManager->flush();
-
-        $this->addFlash('success', sprintf(
-            'Paiement validé pour %s. Durée : %dh %dmin. Montant réglé : %s Ar. (Place %s libérée)',
-            $registration->getVehiclePlate(),
-            floor($durationInSeconds / 3600),
-            floor(($durationInSeconds % 3600) / 60),
-            number_format($amountPaid, 0, ',', ' '),
-            $spot->getSpotNumber()
-        ));
-
+    if (isset($result['error'])) {
+        $this->addFlash('error', $result['error']);
         return $this->redirectToRoute('app_user_dashboard');
     }
+
+    $this->addFlash('success', sprintf(
+        'Paiement validé pour %s. Durée : %dh %dmin. Montant réglé : %s Ar. (Place %s libérée)',
+        $result['plate'],
+        floor($result['seconds'] / 3600),
+        floor(($result['seconds'] % 3600) / 60),
+        number_format($result['amount'], 0, ',', ' '),
+        $result['spotNumber']
+    ));
+
+    return $this->redirectToRoute('app_user_dashboard');
+}
 
     #[Route('/admin', name: 'app_admin_dashboard', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
