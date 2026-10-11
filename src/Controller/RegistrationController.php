@@ -37,8 +37,8 @@ class RegistrationController extends AbstractController
             // Validation
             if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $error = 'Veuillez entrer une adresse email valide.';
-            } elseif (empty($password) || strlen($password) < 6) {
-                $error = 'Le mot de passe doit contenir au moins 6 caractères.';
+            } elseif (empty($password) || strlen($password) < 8) {
+                $error = 'Le mot de passe doit contenir au moins 8 caractères.';
             } elseif ($password !== $password2) {
                 $error = 'Les mots de passe ne correspondent pas.';
             } else {

@@ -28,6 +28,9 @@ security:
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 604800 # 1 week
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minute'
 
     # Note: Only the *first* matching rule is applied
     access_control:
