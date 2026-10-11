@@ -20,6 +20,7 @@
         </h3>
 
         <form action="{{ path('app_spot_add') }}" method="POST">
+            <input type="hidden" name="_token" value="{{csrf_token('spot_add')}}" >
             <div class="form-group">
                 <label for="spotNumber" class="form-label">Numéro de Place</label>
                 <input type="text" id="spotNumber" name="spotNumber" class="form-input" placeholder="A-11 ou E-05" required autocomplete="off" style="text-transform:uppercase;">
@@ -84,6 +85,7 @@
                             <td class="text-right">
                                 {% if spot.status == 'available' %}
                                     <form action="{{ path('app_spot_delete', {id: spot.id}) }}" method="POST" onsubmit="return confirm('Supprimer la place {{ spot.spotNumber }} ?');" style="display:inline-block;">
+                                        <input type="hidden" name="_token" value="{{csrf_token('spot_delete' ~ spot.id)}}" >
                                         <button type="submit" class="btn btn-danger" style="padding:0.35rem 0.75rem;font-size:0.8rem;">Supprimer</button>
                                     </form>
                                 {% else %}

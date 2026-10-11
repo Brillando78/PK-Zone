@@ -273,6 +273,9 @@ class DashboardController extends AbstractController
         ParkingSpotRepository $spotRepository,
         EntityManagerInterface $entityManager
     ): Response {
+        if(!$this -> isCsrfTokenValid('spot_add',$request->request->get('_token'))){
+            throw $this ->createAccessDeniedException('Jeton CSRF invalide');
+        }
         $spotNumber = strtoupper(trim($request->request->get('spotNumber', '')));
         $type       = $request->request->get('type', 'standard');
 
@@ -304,9 +307,15 @@ class DashboardController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function deleteSpot(
         int $id,
+        Request $request,
         ParkingSpotRepository $spotRepository,
         EntityManagerInterface $entityManager
     ): Response {
+        if(!$this -> isCsrfTokenValid('spot_delete'. $id,$request->request->get('_token'))){
+            throw $this ->createAccessDeniedException('Jeton CSRF invalide');
+
+        }
+
         $spot = $spotRepository->find($id);
 
         if (!$spot) {
@@ -362,6 +371,10 @@ class DashboardController extends AbstractController
         OccasionalPriceRepository $priceRepository,
         EntityManagerInterface $entityManager
     ): Response {
+        if (!$this->isCsrfTokenValid('pricing_add', $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('CSRF refuse : pricing_add');
+        }
+
         $date = $request->request->get('date', '');
         $price = (float) $request->request->get('price', 0);
         $reason = trim($request->request->get('reason', ''));
@@ -405,9 +418,14 @@ class DashboardController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function deleteOccasionalPrice(
         int $id,
+        Request $request,
         OccasionalPriceRepository $priceRepository,
         EntityManagerInterface $entityManager
     ): Response {
+        if (!$this->isCsrfTokenValid('pricing_delete' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('CSRF refuse : pricing_delete' . $id);
+        }
+
         $price = $priceRepository->find($id);
 
         if (!$price) {
