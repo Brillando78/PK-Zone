@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Command\InitParkingCommand;
+use App\Service\ParkingBillingService;
 use App\Entity\ParkingSpot;
 use App\Entity\ParkingRegistration;
 use App\Entity\OccasionalPrice;
@@ -19,8 +19,6 @@ use Doctrine\DBAL\LockMode;
 
 class DashboardController extends AbstractController
 {
-    // Tarif unique en Ariary (utilisé pour calculs)
-    private const FLAT_RATE_AR = 2000;
 
     // ============================================================
     //  ESPACE UTILISATEUR (CLIENT)
@@ -31,7 +29,7 @@ class DashboardController extends AbstractController
     public function userDashboard(
         ParkingSpotRepository $spotRepository,
         ParkingRegistrationRepository $registrationRepository,
-        OccasionalPriceRepository $priceRepository
+        ParkingBillingService $billing
     ): Response {
         $spots              = $spotRepository->findAll();
         $activeRegistrations = $registrationRepository->findActiveByUser($this->getUser());
@@ -39,9 +37,8 @@ class DashboardController extends AbstractController
         $occupiedSpots      = count(array_filter($spots, fn($s) => $s->getStatus() === 'occupied'));
         $availableSpots     = $totalSpots - $occupiedSpots;
 
-        $todayPrice = $priceRepository->findByDate(new \DateTime('today'));
-        $flatRateAr = $todayPrice ? (int) $todayPrice->getPricePerHour() : self::FLAT_RATE_AR;
-
+        $flatRateAr = $billing->getRateForDate(new \DateTime('today'));
+        
         return $this->render('dashboard/user.html.twig', [
             'spots'               => $spots,
             'activeRegistrations' => $activeRegistrations,
@@ -105,7 +102,7 @@ public function userReserve(
             $spot->setStatus('occupied');
             $entityManager->persist($registration);
 
-            return null; // pas d'erreur
+            return null; 
         }
     );
 
@@ -119,22 +116,22 @@ public function userReserve(
     return $this->redirectToRoute('app_user_dashboard');
 }
 
-    #[Route('/user/exit/{id}', name: 'app_user_exit', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+#[Route('/user/exit/{id}', name: 'app_user_exit', methods: ['POST'])]
+#[IsGranted('ROLE_USER')]
 public function userExit(
     int $id,
     Request $request,
-    OccasionalPriceRepository $priceRepository,
+    ParkingBillingService $billing,
     EntityManagerInterface $entityManager
 ): Response {
     if (!$this->isCsrfTokenValid('exit' . $id, $request->request->get('_token'))) {
         throw $this->createAccessDeniedException('Jeton CSRF invalide.');
     }
 
-    $currentUserId = $this->getUser()?-> getId();
+    $currentUserId = $this->getUser()?->getId();
 
     $result = $entityManager->wrapInTransaction(
-        function () use ($entityManager, $priceRepository, $id, $currentUserId): array {
+        function () use ($entityManager, $billing, $id, $currentUserId): array {
             $registration = $entityManager->find(ParkingRegistration::class, $id, LockMode::PESSIMISTIC_WRITE);
 
             if (!$registration || $registration->getStatus() !== 'active') {
@@ -145,31 +142,7 @@ public function userExit(
                 return ['forbidden' => true];
             }
 
-            $exitTime          = new \DateTime();
-            $entryTime         = $registration->getEntryTime();
-            $durationInSeconds = max(0, $exitTime->getTimestamp() - $entryTime->getTimestamp());
-
-            $entryDate = clone $entryTime;
-            $entryDate->setTime(0, 0, 0);
-            $todayPrice = $priceRepository->findByDate($entryDate);
-            $flatRateAr = $todayPrice ? (int) $todayPrice->getPricePerHour() : self::FLAT_RATE_AR;
-
-            $hours      = max(1, (int) ceil($durationInSeconds / 3600));
-            $amountPaid = $hours * $flatRateAr;
-
-            $registration->setExitTime($exitTime);
-            $registration->setAmountPaid((string) $amountPaid);
-            $registration->setStatus('completed');
-
-            $spot = $registration->getSpot();
-            $spot->setStatus('available');
-
-            return [
-                'plate'      => $registration->getVehiclePlate(),
-                'seconds'    => $durationInSeconds,
-                'amount'     => $amountPaid,
-                'spotNumber' => $spot->getSpotNumber(),
-            ];
+            return $billing->closeRegistration($registration);
         }
     );
 
@@ -199,7 +172,7 @@ public function userExit(
     public function adminDashboard(
         ParkingSpotRepository $spotRepository,
         ParkingRegistrationRepository $registrationRepository,
-        OccasionalPriceRepository $priceRepository
+        ParkingBillingService $billing
     ): Response {
         $spots               = $spotRepository->findAll();
         $activeRegistrations = $registrationRepository->findActiveRegistrations();
@@ -222,8 +195,7 @@ public function userExit(
             ->setParameter('end', $todayEnd)
             ->getQuery()->getSingleScalarResult() ?? 0);
 
-        $todayPrice = $priceRepository->findByDate($todayStart);
-        $flatRateAr = $todayPrice ? (int) $todayPrice->getPricePerHour() : self::FLAT_RATE_AR;
+        $flatRateAr = $billing->getRateForDate($todayStart);
 
         return $this->render('dashboard/index.html.twig', [
             'spots'               => $spots,
@@ -237,61 +209,13 @@ public function userExit(
         ]);
     }
 
-    #[Route('/admin/exit/{id}', name: 'app_parking_exit', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
-    public function registerExit(
-        int $id,
-        OccasionalPriceRepository $priceRepository,
-        EntityManagerInterface $entityManager
-    ): Response {
-        $registration = $entityManager->getRepository(ParkingRegistration::class)->find($id);
-
-        if (!$registration || $registration->getStatus() !== 'active') {
-            $this->addFlash('error', 'Session de stationnement introuvable ou déjà clôturée.');
-            return $this->redirectToRoute('app_admin_dashboard');
-        }
-
-        $exitTime          = new \DateTime();
-        $entryTime         = $registration->getEntryTime();
-        $durationInSeconds = max(0, $exitTime->getTimestamp() - $entryTime->getTimestamp());
-
-        $entryDate = clone $entryTime;
-        $entryDate->setTime(0, 0, 0);
-        $todayPrice = $priceRepository->findByDate($entryDate);
-        $flatRateAr = $todayPrice ? (int) $todayPrice->getPricePerHour() : self::FLAT_RATE_AR;
-
-        // Facturation : minimum 1 heure, paliers entiers
-        $hours      = max(1, (int) ceil($durationInSeconds / 3600));
-        $amountPaid = $hours * $flatRateAr;
-
-        $registration->setExitTime($exitTime);
-        $registration->setAmountPaid((string) $amountPaid);
-        $registration->setStatus('completed');
-
-        $spot = $registration->getSpot();
-        $spot->setStatus('available');
-
-        $entityManager->flush();
-
-        $this->addFlash('success', sprintf(
-            'Sortie enregistrée pour %s. Durée : %dh %dmin. Montant : %s Ar. (Place %s libérée)',
-            $registration->getVehiclePlate(),
-            floor($durationInSeconds / 3600),
-            floor(($durationInSeconds % 3600) / 60),
-            number_format($amountPaid, 0, ',', ' '),
-            $spot->getSpotNumber()
-        ));
-
-        return $this->redirectToRoute('app_admin_dashboard');
-    }
-
     #[Route('/admin/spots', name: 'app_spots_management', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     public function manageSpots(ParkingSpotRepository $spotRepository): Response
     {
         return $this->render('dashboard/spots.html.twig', [
             'spots'      => $spotRepository->findAll(),
-            'flatRateAr' => self::FLAT_RATE_AR,
+            'flatRateAr' => ParkingBillingService::DEFAULT_RATE_AR,
         ]);
     }
 
@@ -323,7 +247,7 @@ public function userExit(
         $spot->setSpotNumber($spotNumber);
         $spot->setType($type);
         $spot->setStatus('available');
-        $spot->setPricePerHour((string) self::FLAT_RATE_AR);
+        $spot->setPricePerHour((string) ParkingBillingService::DEFAULT_RATE_AR);
 
         $entityManager->persist($spot);
         $entityManager->flush();
@@ -394,7 +318,7 @@ public function userExit(
 
         return $this->render('dashboard/pricing.html.twig', [
             'occasionalPrices' => $occasionalPrices,
-            'flatRateAr'       => self::FLAT_RATE_AR,
+            'flatRateAr'       => ParkingBillingService::DEFAULT_RATE_AR,
         ]);
     }
 

@@ -18,6 +18,10 @@ class OccasionalPriceRepository extends ServiceEntityRepository
 
     public function findByDate(\DateTimeInterface $date): ?OccasionalPrice
     {
-        return $this->findOneBy(['date' => $date]);
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.date = :date')
+            ->setParameter('date', $date->format('Y-m-d'))
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }
