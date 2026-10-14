@@ -31,7 +31,7 @@ class ParkingSpot
     /**
      * @var Collection<int, ParkingRegistration>
      */
-    #[ORM\OneToMany(targetEntity: ParkingRegistration::class, mappedBy: 'spot', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: ParkingRegistration::class, mappedBy: 'spot')]
     private Collection $registrations;
 
     public function __construct()

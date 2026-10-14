@@ -357,10 +357,15 @@ public function userExit(
             return $this->redirectToRoute('app_spots_management');
         }
 
-        $registrations = $entityManager->getRepository(ParkingRegistration::class)->findBy(['spot' => $spot]);
-        foreach ($registrations as $reg) {
-            $entityManager->remove($reg);
+        $hasHistory = $entityManager->getRepository(ParkingRegistration::class)->count(['spot' => $spot]) > 0;
+        if ($hasHistory) {
+        $this->addFlash('error', sprintf(
+            'La place %s a un historique de stationnement : impossible de la supprimer.',
+            $spot->getSpotNumber()
+        ));
+        return $this->redirectToRoute('app_spots_management');
         }
+
         $entityManager->remove($spot);
         $entityManager->flush();
 
