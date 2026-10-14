@@ -116,56 +116,6 @@ public function userReserve(
     return $this->redirectToRoute('app_user_dashboard');
 }
 
-#[Route('/user/exit/{id}', name: 'app_user_exit', methods: ['POST'])]
-#[IsGranted('ROLE_USER')]
-public function userExit(
-    int $id,
-    Request $request,
-    ParkingBillingService $billing,
-    EntityManagerInterface $entityManager
-): Response {
-    if (!$this->isCsrfTokenValid('exit' . $id, $request->request->get('_token'))) {
-        throw $this->createAccessDeniedException('Jeton CSRF invalide.');
-    }
-
-    $currentUserId = $this->getUser()?->getId();
-
-    $result = $entityManager->wrapInTransaction(
-        function () use ($entityManager, $billing, $id, $currentUserId): array {
-            $registration = $entityManager->find(ParkingRegistration::class, $id, LockMode::PESSIMISTIC_WRITE);
-
-            if (!$registration || $registration->getStatus() !== 'active') {
-                return ['error' => 'Session de stationnement introuvable ou déjà clôturée.'];
-            }
-
-            if ($registration->getUser()?->getId() !== $currentUserId) {
-                return ['forbidden' => true];
-            }
-
-            return $billing->closeRegistration($registration);
-        }
-    );
-
-    if (isset($result['forbidden'])) {
-        throw $this->createAccessDeniedException();
-    }
-
-    if (isset($result['error'])) {
-        $this->addFlash('error', $result['error']);
-        return $this->redirectToRoute('app_user_dashboard');
-    }
-
-    $this->addFlash('success', sprintf(
-        'Paiement validé pour %s. Durée : %dh %dmin. Montant réglé : %s Ar. (Place %s libérée)',
-        $result['plate'],
-        floor($result['seconds'] / 3600),
-        floor(($result['seconds'] % 3600) / 60),
-        number_format($result['amount'], 0, ',', ' '),
-        $result['spotNumber']
-    ));
-
-    return $this->redirectToRoute('app_user_dashboard');
-}
 
     #[Route('/admin', name: 'app_admin_dashboard', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
@@ -208,6 +158,47 @@ public function userExit(
             'flatRateAr'          => $flatRateAr,
         ]);
     }
+
+    #[Route('/admin/exit/{id}', name: 'app_admin_exit', methods: ['POST'])]
+#[IsGranted('ROLE_ADMIN')]
+public function adminExit(
+    int $id,
+    Request $request,
+    ParkingBillingService $billing,
+    EntityManagerInterface $entityManager
+): Response {
+    if (!$this->isCsrfTokenValid('admin_exit' . $id, $request->request->get('_token'))) {
+        throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+    }
+
+    $result = $entityManager->wrapInTransaction(
+        function () use ($entityManager, $billing, $id): array {
+            $registration = $entityManager->find(ParkingRegistration::class, $id, LockMode::PESSIMISTIC_WRITE);
+
+            if (!$registration || $registration->getStatus() !== 'active') {
+                return ['error' => 'Session de stationnement introuvable ou déjà clôturée.'];
+            }
+
+            return $billing->closeRegistration($registration);
+        }
+    );
+
+    if (isset($result['error'])) {
+        $this->addFlash('error', $result['error']);
+        return $this->redirectToRoute('app_admin_dashboard');
+    }
+
+    $this->addFlash('success', sprintf(
+        'Paiement encaissé pour %s. Durée : %dh %dmin. Montant : %s Ar. (Place %s libérée)',
+        $result['plate'],
+        floor($result['seconds'] / 3600),
+        floor(($result['seconds'] % 3600) / 60),
+        number_format($result['amount'], 0, ',', ' '),
+        $result['spotNumber']
+    ));
+
+    return $this->redirectToRoute('app_admin_dashboard');
+}
 
     #[Route('/admin/spots', name: 'app_spots_management', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]

@@ -84,7 +84,6 @@
             </div>
 
             <!-- Reservation Modal (Hidden for admins) -->
-            {% if not is_granted('ROLE_ADMIN') %}
             <div id="reservationModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
                 <div class="card" style="width:90%;max-width:400px;">
                     <h3 style="margin-bottom:1rem;font-size:1.1rem;font-weight:700;">Réserver la place <span id="modalSpotNumber" style="color:var(--primary);"></span></h3>
@@ -103,7 +102,6 @@
                     </form>
                 </div>
             </div>
-            {% endif %}
         </div>
 
         <!-- Sessions actives du parking (lecture seule + bouton sortie pour le client) -->
@@ -122,7 +120,6 @@
                             <th>Entrée</th>
                             <th>Durée</th>
                             <th class="text-right">Montant estimé</th>
-                            {% if not is_granted('ROLE_ADMIN') %}<th class="text-right">Action</th>{% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -135,21 +132,13 @@
                                 <td><strong>{{ reg.spot.spotNumber }}</strong></td>
                                 <td>{{ reg.entryTime|date('H:i') }} <span style="font-size:0.8rem;color:var(--text-muted);">({{ reg.entryTime|date('d/m') }})</span></td>
                                 <td><span class="live-timer" id="utimer-{{ reg.id }}">...</span></td>
-                                <td class="text-right"><span class="cost-amount" id="ucost-{{ reg.id }}">0 Ar</span></td>
-                                {% if not is_granted('ROLE_ADMIN') %}
                                 <td class="text-right">
-                                    <form action="{{ path('app_user_exit', {id: reg.id}) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Confirmer le paiement et la sortie du véhicule {{ reg.vehiclePlate }} ?');">
-                                        <input type="hidden" name="_token" value="{{csrf_token('exit' ~ reg.id)}}">
-                                        <button type="submit" class="btn btn-success" style="padding:0.4rem 0.9rem;font-size:0.85rem;">
-                                            Payer &amp; Sortir
-                                        </button>
-                                    </form>
                                 </td>
-                                {% endif %}
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+                <p style="margin-top:1rem;font-size:0.85rem;color:var(--text-muted);">Le règlement s'effectue au guichet avant de quitter le parking.</p>
             </div>
         </div>
         {% endif %}

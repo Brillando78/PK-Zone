@@ -105,6 +105,7 @@
                             <th>Entrée</th>
                             <th>Durée</th>
                             <th class="text-right">Montant en direct</th>
+                            <th class="text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -117,10 +118,18 @@
                                 <td>{{ reg.entryTime|date('H:i') }} <span style="font-size:0.8rem;color:var(--text-muted);">({{ reg.entryTime|date('d/m') }})</span></td>
                                 <td><span class="live-timer" id="timer-{{ reg.id }}">...</span></td>
                                 <td class="text-right"><span class="cost-amount" id="cost-{{ reg.id }}">0 Ar</span></td>
+                                <td class="text-right">
+                                    <form action="{{ path('app_admin_exit', {id: reg.id}) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Confirmer le paiement et la sortie du véhicule {{ reg.vehiclePlate }} ?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('admin_exit' ~ reg.id) }}">
+                                        <button type="submit" class="btn btn-success" style="padding:0.4rem 0.9rem;font-size:0.85rem;">
+                                            Encaisser &amp; libérer
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         {% else %}
                             <tr>
-                                <td colspan="5" style="color:var(--text-muted);text-align:center;padding:2rem 0;">Aucun véhicule actuellement dans le parking.</td>
+                                <td colspan="6" style="color:var(--text-muted);text-align:center;padding:2rem 0;">Aucun véhicule actuellement dans le parking.</td>
                             </tr>
                         {% endfor %}
                     </tbody>
