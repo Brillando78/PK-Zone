@@ -68,10 +68,10 @@ public function userReserve(
     $spotId       = (int) $request->request->get('spot_id', 0);
     $vehiclePlate = strtoupper(trim($request->request->get('vehiclePlate', '')));
 
-    if (empty($vehiclePlate) || strlen($vehiclePlate) < 4) {
-        $this->addFlash('error', 'Plaque d\'immatriculation invalide.');
-        return $this->redirectToRoute('app_user_dashboard');
-    }
+    if (!preg_match('/^[A-Z0-9 -]{6,20}$/', $vehiclePlate)) {
+    $this->addFlash('error', 'Plaque invalide (6 à 20 caractères : lettres, chiffres, espace, tiret).');
+    return $this->redirectToRoute('app_user_dashboard');
+}
 
     $user = $this->getUser();
 
@@ -221,10 +221,10 @@ public function adminExit(
             throw $this ->createAccessDeniedException('Jeton CSRF invalide');
         }
         $spotNumber = strtoupper(trim($request->request->get('spotNumber', '')));
-        $type       = $request->request->get('type', 'standard');
+        $type = 'standard';
 
-        if (empty($spotNumber)) {
-            $this->addFlash('error', 'Le numéro de place est requis.');
+        if (!preg_match('/^[A-Z0-9-]{1,20}$/', $spotNumber)) {
+            $this->addFlash('error', 'Numéro de place invalide (1 à 20 caractères : lettres, chiffres, tiret).');
             return $this->redirectToRoute('app_spots_management');
         }
 
@@ -328,11 +328,10 @@ public function adminExit(
         $price = (float) $request->request->get('price', 0);
         $reason = trim($request->request->get('reason', ''));
 
-        if (empty($date) || $price <= 0) {
-            $this->addFlash('error', 'La date et le prix sont requis.');
+        if (empty($date) || $price < 100 || $price > 1000000) {
+            $this->addFlash('error', 'La date est requise et le prix doit être compris entre 100 et 1 000 000 Ar.');
             return $this->redirectToRoute('app_occasional_pricing');
         }
-
         try {
             $dateObj = \DateTime::createFromFormat('Y-m-d', $date);
             if (!$dateObj) {
