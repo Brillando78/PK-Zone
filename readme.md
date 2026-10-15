@@ -31,8 +31,8 @@ et de fiabilité du code. Voici ce que j'ai trouvé et corrigé :
 Prérequis : PHP ≥ 8.4, Composer, MySQL ou MariaDB.
 
 ```
-git clone https://github.com/Brillando78/PK-zone.git
-cd PK-zone
+git clone https://github.com/Brillando78/PK-Zone.git
+cd PK-Zone
 composer install
 ```
 
