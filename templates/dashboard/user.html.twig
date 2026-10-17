@@ -128,8 +128,7 @@
                                 <td><strong>{{ reg.spot.spotNumber }}</strong></td>
                                 <td>{{ reg.entryTime|date('H:i') }} <span style="font-size:0.8rem;color:var(--text-muted);">({{ reg.entryTime|date('d/m') }})</span></td>
                                 <td><span class="live-timer" id="utimer-{{ reg.id }}">...</span></td>
-                                <td class="text-right">
-                                </td>
+                                <td class="text-right"><span class="cost-amount" id="ucost-{{ reg.id }}">0 Ar</span></td>
                             </tr>
                         {% endfor %}
                     </tbody>
