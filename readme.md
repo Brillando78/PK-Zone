@@ -2,7 +2,16 @@
 
 PK-Zone est une application web de gestion de parking pensée pour les petits parkings : réservation de place par les clients, suivi des véhicules en temps réel, tarification à l’heure et historique des paiements pour l’administrateur.
 
-![Tableau de bord admin](docs/screenshots/admin.png)
+##Aperçu
+![Login](docs/screenshots/login.png)
+
+![Tableau de bord admin](docs/screenshots/tableau-bord-admin1.png)
+![gestion des places](docs/screenshots/gestion-place.png)
+![tarrif Occasionnel](docs/screenshots/tarrif-occasionnel.png)
+![historique](docs/screenshots/historique.png)
+
+![Tableau de bord client](docs/screenshots/tableau-bord-client.png)
+![reservation](docs/screenshots/reservation.png)
 
 ## Fonctionnalités
 **Client :** inscription et connexion, reservation d'une place libre depuis le plan, suivi de sa session en direct
