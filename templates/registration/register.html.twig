@@ -11,7 +11,7 @@
 
     <div class="auth-card">
         <h2 class="auth-title">Créer un compte</h2>
-        <p class="auth-subtitle">Rejoignez PK-Zonepour gérer vos stationnements facilement.</p>
+        <p class="auth-subtitle">Rejoignez PK-Zone pour gérer vos stationnements facilement.</p>
 
         {% if error %}
             <div class="auth-error">
@@ -23,12 +23,12 @@
         <form action="{{ path('app_register') }}" method="POST" class="auth-form">
             <input type="hidden" name="_token" value="{{csrf_token('register')}}">
             <div class="form-group">
-                <label for="regFullName" class="form-label">Nom complet <span style="color:var(--text-muted);">(optionnel)</span></label>
+                <label for="regFullName" class="form-label">Nom complet</label>
                 <input type="text"
                         id="regFullName"
                         name="fullName"
                         class="form-input"
-                        placeholder="Jean Rakoto"
+                        placeholder="votre nom"
                         autocomplete="name"
                         value="{{ app.request.request.get('fullName', '') }}">
             </div>
@@ -66,10 +66,6 @@
                         placeholder="Répéter le mot de passe"
                         autocomplete="new-password"
                         required>
-            </div>
-
-            <div style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;color:var(--text-secondary);">
-                Votre compte aura le rôle <strong style="color:var(--success);">Client</strong>. Pour un accès administrateur, contactez le gestionnaire du parking.
             </div>
 
             <button type="submit" class="btn-auth" id="btn-register">
