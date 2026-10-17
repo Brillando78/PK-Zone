@@ -2,17 +2,17 @@
 
 PK-Zone est une application web de gestion de parking pensée pour les petits parkings : réservation de place par les clients, suivi des véhicules en temps réel, tarification à l’heure et historique des paiements pour l’administrateur.
 
-![Tableau de bord administrateur](docs/screenshots/tableau-bord-admin1.png) |
-![Tableau de bord administrateur](docs/screenshots/tableau-bord-admin2.png)
 
+![Page de connexion](docs/screenshots/login.png)
 ## Aperçu
 
-| Client | Administrateur |
+|  Administrateur| Client |
 |---|---|
-| ![Tableau de bord client](docs/screenshots/tableau-bord-client.png) |![Tableau de bord client](docs/screenshots/tableau-bord-client2.png) |
-| ![Gestion des places](docs/screenshots/gestion-place.png) |
-| ![Réservation d'une place](docs/screenshots/reservation.png) | ![Tarifs occasionnels](docs/screenshots/tarrif-occasionnel.png) |
-| ![Page de connexion](docs/screenshots/login.png) | ![Historique et revenus](docs/screenshots/historique.png) |
+|![Tableau de bord administrateur](docs/screenshots/tableau-bord-admin1.png) | ![Tableau de bord client](docs/screenshots/tableau-bord-client.png) |
+|![Tableau de bord administrateur](docs/screenshots/tableau-bord-admin2.png) | ![Tableau de bord client](docs/screenshots/tableau-bord-client2.png) |
+| ![Gestion des places](docs/screenshots/gestion-place.png) | ![Réservation d'une place](docs/screenshots/reservation.png) |
+| ![Historique et revenus](docs/screenshots/historique.png) |
+| ![Tarifs occasionnels](docs/screenshots/tarrif-occasionnel.png) |
 
 ## Fonctionnalités
 
