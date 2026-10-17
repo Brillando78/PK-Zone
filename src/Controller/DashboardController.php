@@ -31,6 +31,9 @@ class DashboardController extends AbstractController
         ParkingRegistrationRepository $registrationRepository,
         ParkingBillingService $billing
     ): Response {
+        if ($this-> isGranted('ROLE_ADMIN')){
+            return $this -> redirectToRoute('app_admin_dashboard');
+        }
         $spots              = $spotRepository->findAll();
         $activeRegistrations = $registrationRepository->findActiveByUser($this->getUser());
         $totalSpots         = count($spots);

@@ -5,12 +5,8 @@
 {% block body %}
 <div class="header-bar">
     <div>
-        <h2 class="page-title">Espace Client</h2>
-        <p class="page-subtitle">Bienvenue, {{ app.user.displayName }} — Consultez l'état du parking et votre ticket en temps réel.</p>
-    </div>
-    <div class="legend-item">
-        <div class="legend-color" style="background-color:var(--success);width:8px;height:8px;border-radius:50%;"></div>
-        <span style="font-size:0.85rem;color:var(--text-secondary);font-weight:500;">En direct</span>
+        <h2 class="page-title">Bienvenue, {{ app.user.displayName }}</h2>
+        <p class="page-subtitle">Consultez l'état du parking et votre ticket en temps réel.</p>
     </div>
 </div>
 
@@ -104,7 +100,7 @@
             </div>
         </div>
 
-        <!-- Sessions actives du parking (lecture seule + bouton sortie pour le client) -->
+        <!-- Sessions actives du parking -->
         {% if activeRegistrations|length > 0 %}
         <div class="card table-card">
             <h3 class="panel-title">
@@ -144,19 +140,18 @@
         {% endif %}
     </div>
 
-    <!-- Colonne droite : info tarifaire -->
+    <!--info tarifaire -->
     <div style="display:flex;flex-direction:column;gap:1.5rem;">
 
         <!-- Info Tarif -->
         <div class="card tarif-info-box">
             <h4 style="font-weight:700;margin-bottom:1rem;font-size:1rem;display:flex;align-items:center;gap:0.5rem;">
-                <span style="font-size:1.2rem;">💰</span> Tarification
+                Tarification
             </h4>
             <div style="display:flex;flex-direction:column;gap:0.75rem;">
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;background:rgba(255,255,255,0.04);border-radius:8px;">
                     <div>
-                        <div style="font-weight:600;font-size:0.95rem;">Tarif Unique</div>
-                        <div style="font-size:0.8rem;color:var(--text-muted);">Standard · Électrique · PMR</div>
+                        <div style="font-weight:600;font-size:0.95rem;">Tarif Unique : </div>
                     </div>
                     <div style="font-size:1.3rem;font-weight:800;color:var(--warning);">{{ flatRateAr|number_format(0, ',', ' ') }} Ar<span style="font-size:0.75rem;font-weight:500;color:var(--text-muted);">/h</span></div>
                 </div>
@@ -166,25 +161,6 @@
                 <div>• Minimum de facturation : 1 heure</div>
                 <div>• Paiement à la sortie</div>
             </div>
-        </div>
-
-        <!-- Carte informative -->
-        <div class="card" style="background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(139,92,246,0.04));">
-            <h4 style="font-weight:600;margin-bottom:0.75rem;font-size:0.95rem;color:var(--primary);">Comment ça marche ?</h4>
-            <ol style="list-style:none;display:flex;flex-direction:column;gap:0.6rem;font-size:0.85rem;color:var(--text-secondary);">
-                <li style="display:flex;gap:0.6rem;align-items:flex-start;">
-                    <span style="background:var(--primary);color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;">1</span>
-                    <span>Le responsable enregistre votre entrée au guichet avec votre plaque d'immatriculation.</span>
-                </li>
-                <li style="display:flex;gap:0.6rem;align-items:flex-start;">
-                    <span style="background:var(--primary);color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;">2</span>
-                    <span>Votre ticket apparaît ici en temps réel avec la durée et le montant dû.</span>
-                </li>
-                <li style="display:flex;gap:0.6rem;align-items:flex-start;">
-                    <span style="background:var(--primary);color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;">3</span>
-                    <span>Cliquez sur <strong>Payer &amp; Sortir</strong> pour valider le paiement et libérer votre place.</span>
-                </li>
-            </ol>
         </div>
     </div>
 </div>

@@ -437,6 +437,7 @@ a { color: inherit; text-decoration: none; }
 
 /* Dashboard Layout */
 .dashboard-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start; }
+.dashboard-layout--full{grid-template-columns: :minmax(0,1fr);}
 @media (max-width: 1024px) { .dashboard-layout { grid-template-columns: 1fr; } }
 
 /* Parking map */

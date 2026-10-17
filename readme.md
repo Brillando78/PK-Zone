@@ -5,8 +5,8 @@ PK-Zone est une application web de gestion de parking pensée pour les petits pa
 ![Tableau de bord admin](docs/screenshots/admin.png)
 
 ## Fonctionnalités
-**Client :** [inscription, réservation d'une place, suivi de sa session]
-**Administrateur :** [tableau de bord, gestion des places, tarifs occasionnels, encaissement et libération, historique]
+**Client :** inscription et connexion, reservation d'une place libre depuis le plan, suivi de sa session en direct
+**Administrateur :** tableau de bord(statistique et plan en temps réel), gestion des places, tarifs occasionnels par date, encaissement et liberation des places, historique et revenus
 
 ## Technologies
 PHP 8.4, Symfony 8.1, Doctrine ORM, Twig, MySQL/MariaDB

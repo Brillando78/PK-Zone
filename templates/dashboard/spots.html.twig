@@ -26,14 +26,6 @@
                 <input type="text" id="spotNumber" name="spotNumber" class="form-input" placeholder="A-11 ou E-05" required autocomplete="off" style="text-transform:uppercase;">
             </div>
 
-            <div class="form-group">
-                <label for="type" class="form-label">Type de Place</label>
-                <input type="hidden" name="type" value="standard">
-                <div style="padding:0.75rem;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:8px;color:var(--text-secondary);">
-                    <strong style="color:var(--primary);">Standard</strong> - Place de parking normale
-                </div>
-            </div>
-
             <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1.25rem;font-size:0.85rem;color:var(--text-secondary);display:flex;align-items:center;gap:0.5rem;">
                 Tarif appliqué automatiquement : <strong style="color:var(--warning);">{{ flatRateAr|number_format(0, ',', ' ') }} Ar / heure</strong>
             </div>
@@ -56,7 +48,6 @@
                 <thead>
                     <tr>
                         <th>Numéro</th>
-                        <th>Type</th>
                         <th>Tarif</th>
                         <th>Statut</th>
                         <th class="text-right">Actions</th>
@@ -66,7 +57,6 @@
                     {% for spot in spots %}
                         <tr>
                             <td><strong>{{ spot.spotNumber }}</strong></td>
-                            <td><span class="spot-badge {{ spot.type }}">{{ spot.type }}</span></td>
                             <td><strong style="color:var(--warning);">{{ spot.pricePerHour|number_format(0, ',', ' ') }} Ar/h</strong></td>
                             <td>
                                 {% if spot.status == 'available' %}
