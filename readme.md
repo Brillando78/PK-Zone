@@ -37,11 +37,21 @@ composer install
 ```
 
 Crée un fichier `.env.local` avec ta connexion à la base. Adapte `serverVersion`
-à ton serveur (par exemple `mariadb-10.4.32` pour XAMPP) :
+au type de serveur que tu utilises :
+
+| Serveur | Valeur de `serverVersion` |
+|---|---|
+| MySQL 8 | `8.0` |
+| MariaDB ou XAMPP | `mariadb-10.4.32` (remplace par ta version, affichée dans phpMyAdmin) |
+
+Exemple avec MariaDB (XAMPP) :
 
 ```
-DATABASE_URL="mysql://root:@127.0.0.1:3306/parking_management?serverVersion=8.0&charset=utf8mb4"
+DATABASE_URL="mysql://root:@127.0.0.1:3306/parking_management?serverVersion=mariadb-10.4.32&charset=utf8mb4"
 ```
+
+Cette valeur est importante : si elle ne correspond pas à ton serveur, les
+migrations échouent avec l'erreur « The metadata storage is not up to date ».
 
 ```
 php bin/console doctrine:database:create
