@@ -6,11 +6,13 @@ PK-Zone est une application web de gestion de parking pensée pour les petits pa
 ![Login](docs/screenshots/login.png)
 
 ![Tableau de bord admin](docs/screenshots/tableau-bord-admin1.png)
+![Tableau de bord admin](docs/screenshots/tableau-bord-admin2.png)
 ![gestion des places](docs/screenshots/gestion-place.png)
 ![tarrif Occasionnel](docs/screenshots/tarrif-occasionnel.png)
 ![historique](docs/screenshots/historique.png)
 
 ![Tableau de bord client](docs/screenshots/tableau-bord-client.png)
+![Tableau de bord client](docs/screenshots/tableau-bord-client2.png)
 ![reservation](docs/screenshots/reservation.png)
 
 ## Fonctionnalités
